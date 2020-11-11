@@ -1,0 +1,6 @@
+access_token;r9bNgKunUJNel4ALjyjkxGHx3xASe1aiGzIQ
+server_address;10.10.15.90
+gpio1;5
+trailer_bay1;W101
+gpio2;6
+trailer_bay2;W102
