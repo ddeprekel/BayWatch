@@ -1,6 +1,6 @@
 #!/usr/bin/python3.7
 
-import RPi.GPIO as GPIO
+import automationhat
 import datetime
 import logging
 import os
@@ -39,51 +39,44 @@ class BayWatch():
         return config_dict
 
     # Other functions
-    def button_change(self, channel):
+    def button_change(self, channel, door_status):
         url = "http://" + bay_watch.config_dict['server_address'] + '/modules/TrailerBay/UpdateTrailerBayDoorStatus.php'
 
-        door_status = "ERROR"
         message = "ERROR"
         trailer_bay = "ERROR"
         write_data = "ERROR <br />"
 
-        if channel == int(self.config_dict['gpio1']):
+        if channel == 0:
             filename = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door1.html'))
             trailer_bay = self.config_dict['trailer_bay1']
-        elif channel == int(self.config_dict['gpio2']):
+        elif channel == 2:
             filename = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door2.html'))
             trailer_bay = self.config_dict['trailer_bay2']
-
-        if GPIO.input(channel) == 1:
-            # Do stuff when it is closed... which is this?
-            door_status = "CLOSED"
-        if GPIO.input(channel) == 0:
-            # Do stuff when it is opened... which is this?
-            door_status = "OPEN"
                 
         params = {'access_token': self.config_dict['access_token'], 'door_status': door_status, 'trailer_bay': trailer_bay}
 
-        if door_status != "ERROR":
-            try:
-                r = requests.post(url = url, data = params)
-                data = r.json()
+        print(trailer_bay + ' ' + str(channel) + ' ' + door_status)
 
-                self.logger.info(url + ' ' + str(params) + ' ' + str(data))
+        try:
+            r = requests.post(url = url, data = params)
+            data = r.json()
 
-                if data['success'] == True:
-                    message = data['message']
-                if data['success'] == False:
-                    message = data['error']
-            except Exception as e:
-                self.logger.exception('Endpoint failed: %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), e))
+            self.logger.info(url + ' ' + str(params) + ' ' + str(data))
 
-        if channel == int(self.config_dict['gpio1']):
+            if data['success'] == True:
+                message = data['message']
+            if data['success'] == False:
+                message = data['error']
+        except Exception as e:
+            self.logger.exception('Endpoint failed: %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), e))
+
+        if channel == 0:
             write_data = """
         Door 1 Trailer Bay: {0} <br />
         Door 1 Status: {1} <br />
         Door 1 Message: {2} <br />
             """.format(trailer_bay, door_status, message)
-        elif channel == int(self.config_dict['gpio2']):
+        elif channel == 2:
             write_data = """
         Door 2 Trailer Bay: {0} <br />
         Door 2 Status: {1} <br />
@@ -106,17 +99,50 @@ if __name__ == "__main__":
         bay_watch.config_dict = bay_watch.load_config()
     else:
         exit('Config File missing')
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(int(bay_watch.config_dict['gpio1']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(int(bay_watch.config_dict['gpio1']), GPIO.BOTH, callback=bay_watch.button_change, bouncetime=250)
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(int(bay_watch.config_dict['gpio2']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    GPIO.add_event_detect(int(bay_watch.config_dict['gpio2']), GPIO.BOTH, callback=bay_watch.button_change, bouncetime=250)
-
+        
     try:
         while True:
+            if automationhat.input[0].read() == 1:
+                try:
+                    if previous_one != True:
+                        bay_watch.button_change(0, 'CLOSED')
+
+                except Exception as e:
+                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '1', e))
+
+                previous_one = True
+            elif automationhat.input[0].read() == 0:
+                try:
+                    if previous_one != False:
+                        bay_watch.button_change(0, 'OPEN')
+
+                except Exception as e:
+                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '1', e))
+
+                previous_one = False
+            else:
+                self.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                
+            if automationhat.input[2].read() == 1:
+                try:
+                    if previous_one != True:
+                        bay_watch.button_change(2, 'CLOSED')
+
+                except Exception as e:
+                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
+
+                previous_one = True
+            elif automationhat.input[2].read() == 0:
+                try:
+                    if previous_one != False:
+                        bay_watch.button_change(2, 'OPEN')
+
+                except Exception as e:
+                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
+
+                previous_one = False
+            else:
+                self.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
             time.sleep(0.1)
     except KeyboardInterrupt:
-        GPIO.cleanup()
