@@ -1,4 +1,5 @@
 access_token;r9bNgKunUJNel4ALjyjkxGHx3xASe1aiGzIQ
-server_address;10.10.15.90
-trailer_bay1;W101
-trailer_bay2;W102
+server_address;10.10.15.15
+sleep_time;1.0
+trailer_bay1;C2DOCK1
+trailer_bay2;C2DOCK2

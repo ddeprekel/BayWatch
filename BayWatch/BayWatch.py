@@ -7,9 +7,9 @@ import os
 import time
 import requests
 
+from gpiozero import CPUTemperature
 from pathlib import Path
 from logging.handlers import TimedRotatingFileHandler
-
 
 class BayWatch():
     def __init__(self):
@@ -42,6 +42,8 @@ class BayWatch():
     def button_change(self, channel, door_status):
         url = "http://" + bay_watch.config_dict['server_address'] + '/modules/TrailerBay/UpdateTrailerBayDoorStatus.php'
 
+        cpu = CPUTemperature()
+
         message = "ERROR"
         trailer_bay = "ERROR"
         write_data = "ERROR <br />"
@@ -49,24 +51,26 @@ class BayWatch():
         if channel == 0:
             filename = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door1.html'))
             trailer_bay = self.config_dict['trailer_bay1']
+
         elif channel == 2:
             filename = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door2.html'))
             trailer_bay = self.config_dict['trailer_bay2']
                 
         params = {'access_token': self.config_dict['access_token'], 'door_status': door_status, 'trailer_bay': trailer_bay}
 
-        print(trailer_bay + ' ' + str(channel) + ' ' + door_status)
+        #print(trailer_bay + ' ' + str(channel) + ' ' + door_status)
 
         try:
             r = requests.post(url = url, data = params)
             data = r.json()
 
-            self.logger.info(url + ' ' + str(params) + ' ' + str(data))
+            self.logger.info('url: ' + url + ' params: ' + str(params) + ' data: ' + str(data) + ' cpu temp: ' + str(cpu.temperature))
 
             if data['success'] == True:
                 message = data['message']
             if data['success'] == False:
                 message = data['error']
+
         except Exception as e:
             self.logger.exception('Endpoint failed: %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), e))
 
@@ -76,6 +80,7 @@ class BayWatch():
         Door 1 Status: {1} <br />
         Door 1 Message: {2} <br />
             """.format(trailer_bay, door_status, message)
+
         elif channel == 2:
             write_data = """
         Door 2 Trailer Bay: {0} <br />
@@ -100,6 +105,9 @@ if __name__ == "__main__":
     else:
         exit('Config File missing')
         
+    previous_one = True
+    previous_two = True
+
     try:
         while True:
             if automationhat.input[0].read() == 1:
@@ -108,7 +116,7 @@ if __name__ == "__main__":
                         bay_watch.button_change(0, 'CLOSED')
 
                 except Exception as e:
-                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '1', e))
+                    bay_watch.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '1', e))
 
                 previous_one = True
             elif automationhat.input[0].read() == 0:
@@ -117,11 +125,11 @@ if __name__ == "__main__":
                         bay_watch.button_change(0, 'OPEN')
 
                 except Exception as e:
-                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '1', e))
+                    bay_watch.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '1', e))
 
                 previous_one = False
             else:
-                self.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                bay_watch.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 
             if automationhat.input[2].read() == 1:
                 try:
@@ -129,7 +137,7 @@ if __name__ == "__main__":
                         bay_watch.button_change(2, 'CLOSED')
 
                 except Exception as e:
-                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
+                    bay_watch.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
 
                 previous_two = True
             elif automationhat.input[2].read() == 0:
@@ -138,11 +146,13 @@ if __name__ == "__main__":
                         bay_watch.button_change(2, 'OPEN')
 
                 except Exception as e:
-                    self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
+                    bay_watch.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
 
                 previous_two = False
             else:
-                self.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                bay_watch.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-            time.sleep(0.1)
+            time.sleep(float(bay_watch.config_dict['sleep_time']))
     except KeyboardInterrupt:
+        bay_watch.logger.info('BayWatch.py stop. %s ' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
