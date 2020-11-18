@@ -125,22 +125,22 @@ if __name__ == "__main__":
                 
             if automationhat.input[2].read() == 1:
                 try:
-                    if previous_one != True:
+                    if previous_two != True:
                         bay_watch.button_change(2, 'CLOSED')
 
                 except Exception as e:
                     self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
 
-                previous_one = True
+                previous_two = True
             elif automationhat.input[2].read() == 0:
                 try:
-                    if previous_one != False:
+                    if previous_two != False:
                         bay_watch.button_change(2, 'OPEN')
 
                 except Exception as e:
                     self.logger.exception('%s - Function call failed for input %s: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '2', e))
 
-                previous_one = False
+                previous_two = False
             else:
                 self.logger.exception('Automation hat read error: %s \n' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
