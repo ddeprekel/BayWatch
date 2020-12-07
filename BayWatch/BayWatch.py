@@ -4,12 +4,16 @@ import automationhat
 import datetime
 import logging
 import os
+import ST7735 as ST7735
+import sys
 import time
 import requests
 
+from fonts.ttf import RobotoBlackItalic as UserFont
 from gpiozero import CPUTemperature
-from pathlib import Path
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
+from PIL import Image, ImageFont, ImageDraw
 
 class BayWatch():
     def __init__(self):
@@ -98,7 +102,8 @@ class BayWatch():
                 with open(fname) as infile:
                     outfile.write(infile.read())
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
+    #Initialize BayWatch specific variables
     bay_watch = BayWatch()
     if bay_watch.config_file.is_file():
         bay_watch.config_dict = bay_watch.load_config()
@@ -110,6 +115,7 @@ if __name__ == "__main__":
 
     try:
         while True:
+            #Perform input read baywatch_functions
             if automationhat.input[0].read() == 1:
                 try:
                     if previous_one != True:
