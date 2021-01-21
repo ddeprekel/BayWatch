@@ -96,7 +96,7 @@ class BayWatch():
 
         filenames = [Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/header.html')), Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door1.html')), Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door2.html')), Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/footer.html'))]
         with open('/var/www/html/index.html', 'w') as outfile:
-            outfile.write("cpu_temp:{temp:.2f}".format(temp=cpu.temperature))
+            outfile.write("cpu_temp:{temp:.2f} <br />".format(temp=cpu.temperature))
             for fname in filenames:
                 with open(fname) as infile:
                     outfile.write(infile.read())
