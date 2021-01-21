@@ -80,16 +80,14 @@ class BayWatch():
 
         if channel == 0:
             write_data = """
-        Door 1 Trailer Bay: {0} <br />
-        Door 1 Status: {1} <br />
-        Door 1 Message: {2} <br />
+        {0}_door_status:{1} <br />
+        {0}_door_message:{2} <br />
             """.format(trailer_bay, door_status, message)
 
         elif channel == 2:
             write_data = """
-        Door 2 Trailer Bay: {0} <br />
-        Door 2 Status: {1} <br />
-        Door 2 Message: {2} <br />
+        {0}_door_status:{1} <br />
+        {0}_door_message:{2} <br />
             """.format(trailer_bay, door_status, message)
         
         #write info to file for html scraping later
@@ -97,7 +95,8 @@ class BayWatch():
             output_file.write(write_data)
 
         filenames = [Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/header.html')), Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door1.html')), Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/Door2.html')), Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'HtmlFiles/footer.html'))]
-        with open('/var/www/html/BayWatch.html', 'w') as outfile:
+        with open('/var/www/html/index.html', 'w') as outfile:
+            outfile.write("cpu_temp:{temp:.2f}".format(temp=cpu.temperature))
             for fname in filenames:
                 with open(fname) as infile:
                     outfile.write(infile.read())
